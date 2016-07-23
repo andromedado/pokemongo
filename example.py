@@ -39,13 +39,15 @@ LOGIN_OAUTH = 'https://sso.pokemon.com/sso/oauth2.0/accessToken'
 APP = 'com.nianticlabs.pokemongo'
 
 with open('credentials.json') as file:
-	credentials = json.load(file)
+    credentials = json.load(file)
+
+with open('config.json') as file:
+    privateConfiguration = json.load(file)
 
 PTC_CLIENT_SECRET = credentials.get('ptc_client_secret', None)
 ANDROID_ID = credentials.get('android_id', None)
 SERVICE = credentials.get('service', None)
 CLIENT_SIG = credentials.get('client_sig', None)
-GOOGLEMAPS_KEY = credentials.get('gmaps_key', None)
 
 SESSION = requests.session()
 SESSION.headers.update({'User-Agent': 'Niantic App'})
@@ -436,8 +438,9 @@ def get_token(service, username, password):
 
 def get_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--gmaps_key', help='Google Maps API Key', required=True)
     parser.add_argument(
-        '-a', '--auth_service', type=str.lower, help='Auth Service', default='ptc')
+        '-a', '--auth_service', type=str.lower, help='Auth Service', default='google')
     parser.add_argument('-u', '--username', help='Username', required=True)
     parser.add_argument('-p', '--password', help='Password', required=False)
     parser.add_argument(
@@ -500,7 +503,8 @@ def get_args():
     parser.add_argument(
         '-d', '--debug', help='Debug Mode', action='store_true')
     parser.set_defaults(DEBUG=True)
-    return parser.parse_args()
+    return parser.parse_args(args=privateConfiguration.get('flags', []))
+
 
 @memoize
 def login(args):
@@ -753,8 +757,9 @@ def register_background_thread(initial_registration=False):
 
 def create_app():
     app = Flask(__name__, template_folder='templates')
+    args = get_args()
 
-    GoogleMaps(app, key=GOOGLEMAPS_KEY)
+    GoogleMaps(app, key=args.gmaps_key)
     return app
 
 
@@ -787,9 +792,10 @@ def config():
 @app.route('/')
 def fullmap():
     clear_stale_pokemons()
+    args = get_args()
 
     return render_template(
-        'example_fullmap.html', key=GOOGLEMAPS_KEY, fullmap=get_map(), auto_refresh=auto_refresh)
+        'example_fullmap.html', key=args.gmaps_key, fullmap=get_map(), auto_refresh=auto_refresh)
 
 
 @app.route('/next_loc')

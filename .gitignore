@@ -1,2 +1,10 @@
 *.pyc
+*.php
+*.shtml
+cgi-bin/
+default.html
+favicon.ico
 .idea
+config.json
+poke.fcgi
+.htaccess
